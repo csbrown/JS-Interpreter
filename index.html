@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>JS-Interpreter Demo</title>
+  <title>js2pseudocode</title>
   <link href="demos/style.css" rel="stylesheet" type="text/css">
 
   <script>
@@ -30,16 +30,67 @@
       disable('');
     }
 
+    function updateVariablesList() {
+        for (const name in variables) {
+            var value;
+            try {
+                value = myInterpreter.getValueFromScope(name);
+            } catch (e) {
+                try {
+                    variable_cell = document.querySelector('#variablelist tr td[innerHTML="'.concat(name).concat('"]'));
+                    variable_row = variable_cell.parentNode;
+                    variable_row.remove();
+                } catch(e) {}
+                delete variables[name];
+                continue;
+            }
+            if (typeof value == 'undefined') {
+                //value = 'undefined';
+            }
+            else if (value.class == "Array") {
+                var newVal = [];
+                for (var i = 0; i < value.properties.length; i++) {
+                    newVal.push(value.properties[i]);
+                }
+                value = newVal;
+            }
+            var variable_table = document.querySelector('#variablelist')
+            var variable_cell = variable_table.querySelector('#variable_'.concat(name));
+            console.log(variable_cell);
+            if (variable_cell === null) {
+                var new_row = document.createElement('tr');
+                variable_cell = document.createElement('td');
+                variable_cell.setAttribute('id', 'variable_'.concat(name))
+                variable_cell.innerHTML = name;
+                new_row.appendChild(variable_cell);
+                new_row.appendChild(document.createElement('td'));
+                variable_table.appendChild(new_row);
+            }
+            var variable_row = variable_cell.parentNode;
+            var variable_value_cell = variable_row.children[1];
+            variable_value_cell.innerHTML = JSON.stringify(value);
+        }
+    }
+
+    var variables = {};
     function stepButton() {
       if (myInterpreter.stateStack.length) {
         var node =
             myInterpreter.stateStack[myInterpreter.stateStack.length - 1].node;
+        console.log(node);
+        if (node.type == "VariableDeclaration") {
+            for (declaration in node.declarations) {
+                console.log(declaration);
+                variables[node.declarations[declaration].id.name] = 1;
+            }
+        }
         var start = node.start;
         var end = node.end;
       } else {
         var start = 0;
         var end = 0;
       }
+      console.log(start);
       createSelection(start, end);
       try {
         var ok = myInterpreter.step();
@@ -48,6 +99,41 @@
           disable('disabled');
         }
       }
+      updateVariablesList();
+      return node;
+    }
+
+    var lineButtonStart = 0;
+    function lineButton() {
+      var lineEnds = [];
+      var re = /\n/g;
+      var code = document.getElementById('code').value;
+      while ((match = re.exec(code)) != null) {
+        lineEnds.push(match.index);
+      }
+      var pseudocodelineEnds = [];
+      var pseudocode = document.getElementById('pseudocode').value;
+      while ((match = re.exec(pseudocode)) != null) {
+        pseudocodelineEnds.push(match.index);
+      }
+      function lineEndFinder(i) {
+        function findLineEnd(j) {
+            return j >= i;
+        }
+        return findLineEnd;
+      }
+      var newNode = stepButton();
+      while ((
+                lineEnds.findIndex(lineEndFinder(lineButtonStart)) == lineEnds.findIndex(lineEndFinder(newNode.start))
+            ) || (newNode.type == "BlockStatement") || (newNode.type == "Program")
+        ) {
+        newNode = stepButton();
+      }
+      var end = lineEnds.findIndex(lineEndFinder(lineButtonStart));
+      var start = end - 1;
+      //createSelection(lineEnds[start], lineEnds[end]);
+      createPseudoCodeSelection(pseudocodelineEnds[start], pseudocodelineEnds[end]);
+      lineButtonStart = newNode.start;
     }
 
     function runButton() {
@@ -60,11 +146,20 @@
 
     function disable(disabled) {
       document.getElementById('stepButton').disabled = disabled;
+      document.getElementById('lineButton').disabled = disabled;
       document.getElementById('runButton').disabled = disabled;
     }
 
-    function createSelection(start, end) {
-      var field = document.getElementById('code');
+    function hideJS() {
+      var x = document.getElementById('code');
+      if (x.style.display === "none") {
+        x.style.display = "inline-block";
+      } else {
+        x.style.display = "none";
+      }
+    }
+
+    function createTextSelection(field, start, end) {
       if (field.createTextRange) {
         var selRange = field.createTextRange();
         selRange.collapse(true);
@@ -77,33 +172,65 @@
         field.selectionStart = start;
         field.selectionEnd = end;
       }
+    }
+    
+    function createPseudoCodeSelection(start, end) {
+      var field = document.getElementById('pseudocode');
+      createTextSelection(field, start, end);
       field.focus();
     }
+
+    function createSelection(start, end) {
+      var field = document.getElementById('code');
+      createTextSelection(field, start, end);
+      field.focus();
+    }
+
   </script>
 </head>
 <body>
+  
   <h1>JS-Interpreter Demo</h1>
 
   <p>Enter JavaScript code below, then click <em>Parse</em>.  To execute, either
-  click <em>Step</em> repeatedly, or click <em>Run</em> once.
-  Open your browser's console for errors.</p>
-  <p><textarea id="code">
+  click <em>Step</em> or <em> Line </em> repeatedly, or click <em>Run</em> once.
+  Open your browser's console for errors.  To hide this box, click <em> Hide </em></p> 
+  <textarea id="code" style="display:inline-block;">
 var result = [];
 function fibonacci(n, output) {
   var a = 1, b = 1, sum;
-  for (var i = 0; i &lt; n; i++) {
+  for (var i = 0; i &lt; n;) {
     output.push(a);
     sum = a + b;
     a = b;
     b = sum;
-  }
-}
+    i++;}}
 fibonacci(16, result);
 alert(result.join(', '));
-</textarea><br>
+</textarea>
+<textarea id="pseudocode" style="display:inline-block;">
+SET result to empty list
+DEFINE FUNCTION fibonacci(n, output) {
+  SET a to 1, SET b to 1, SET sum to 0, SET i to 0
+  WHILE i &lt; n
+    PUSH a onto output
+    SET sum to a+b
+    SET a to b
+    SET b to sum
+    SET i to i+1
+fibonacci(16, result);
+DISPLAY result
+</textarea>
+
+<table id="variablelist" style="display:inline-block;">
+</table>
+
+<br><br>
   <button onclick="parseButton()">Parse</button>
   <button onclick="stepButton()" id="stepButton" disabled="disabled">Step</button>
+  <button onclick="lineButton()" id="lineButton" disabled="disabled">Line</button>
   <button onclick="runButton()" id="runButton" disabled="disabled">Run</button>
+  <button onclick="hideJS()" id="hideButton">HideJS</button>
   </p>
 
   <p><small>
