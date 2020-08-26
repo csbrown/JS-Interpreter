@@ -24,9 +24,20 @@
           interpreter.createNativeFunction(wrapper));
     }
 
+    function output(something) {
+        document.querySelector("#outputarea").value = JSON.stringify(something);
+    }
+    function initOutput(interpreter, scope) {
+      var wrapper = function(something) {
+        return output(something);
+      };
+      interpreter.setProperty(scope, 'output',
+          interpreter.createNativeFunction(wrapper));
+    }
+
     function parseButton() {
       var code = document.getElementById('code').value;
-      myInterpreter = new Interpreter(code, initAlert);
+      myInterpreter = new Interpreter(code, initOutput);
       disable('');
     }
 
@@ -56,7 +67,6 @@
             }
             var variable_table = document.querySelector('#variablelist')
             var variable_cell = variable_table.querySelector('#variable_'.concat(name));
-            console.log(variable_cell);
             if (variable_cell === null) {
                 var new_row = document.createElement('tr');
                 variable_cell = document.createElement('td');
@@ -77,10 +87,8 @@
       if (myInterpreter.stateStack.length) {
         var node =
             myInterpreter.stateStack[myInterpreter.stateStack.length - 1].node;
-        console.log(node);
         if (node.type == "VariableDeclaration") {
             for (declaration in node.declarations) {
-                console.log(declaration);
                 variables[node.declarations[declaration].id.name] = 1;
             }
         }
@@ -90,7 +98,6 @@
         var start = 0;
         var end = 0;
       }
-      console.log(start);
       createSelection(start, end);
       try {
         var ok = myInterpreter.step();
@@ -123,11 +130,14 @@
         return findLineEnd;
       }
       var newNode = stepButton();
+      var i = 0;
       while ((
                 lineEnds.findIndex(lineEndFinder(lineButtonStart)) == lineEnds.findIndex(lineEndFinder(newNode.start))
             ) || (newNode.type == "BlockStatement") || (newNode.type == "Program")
         ) {
         newNode = stepButton();
+        i += 1;
+        if (i >= 100) { break; }
       }
       var end = lineEnds.findIndex(lineEndFinder(lineButtonStart));
       var start = end - 1;
@@ -190,11 +200,8 @@
 </head>
 <body>
   
-  <h1>JS-Interpreter Demo</h1>
+  <h1>Phony pseudocode interpreter</h1>
 
-  <p>Enter JavaScript code below, then click <em>Parse</em>.  To execute, either
-  click <em>Step</em> or <em> Line </em> repeatedly, or click <em>Run</em> once.
-  Open your browser's console for errors.  To hide this box, click <em> Hide </em></p> 
   <textarea id="code" style="display:inline-block;">
 var result = [];
 function fibonacci(n, output) {
@@ -226,6 +233,11 @@ DISPLAY result
 </table>
 
 <br><br>
+
+  <input id="outputarea" type="text" size=200 readonly="readonly" />
+
+<br><br>
+
   <button onclick="parseButton()">Parse</button>
   <button onclick="stepButton()" id="stepButton" disabled="disabled">Step</button>
   <button onclick="lineButton()" id="lineButton" disabled="disabled">Line</button>
@@ -235,17 +247,9 @@ DISPLAY result
 
   <p><small>
   <script>
-    if (compressed) {
-      document.write('[ Running compressed bundle.  Switch to <A HREF="?uncompressed">raw sources</A>. ]');
-    } else {
-      document.write('[ Running raw sources.  Switch to <A HREF="?compressed">compressed bundle</A>. ]');
-    }
     disable('disabled');
   </script>
   </small></p>
-
-  <p>Read the <a href="docs.html">JS-Interpreter documentation</a>.</p>
-  <p>Get the <a href="https://github.com/NeilFraser/JS-Interpreter">source code</a>.</p>
 
 </body>
 </html>
