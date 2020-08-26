@@ -28,6 +28,7 @@
         document.querySelector("#outputarea").value = JSON.stringify(something);
     }
     function initOutput(interpreter, scope) {
+      document.querySelector("#outputarea").value = '';
       var wrapper = function(something) {
         return output(something);
       };
@@ -155,9 +156,9 @@
     }
 
     function disable(disabled) {
-      document.getElementById('stepButton').disabled = disabled;
+      //document.getElementById('stepButton').disabled = disabled;
       document.getElementById('lineButton').disabled = disabled;
-      document.getElementById('runButton').disabled = disabled;
+      //document.getElementById('runButton').disabled = disabled;
     }
 
     function hideJS() {
@@ -239,9 +240,7 @@ DISPLAY result
 <br><br>
 
   <button onclick="parseButton()">Parse</button>
-  <button onclick="stepButton()" id="stepButton" disabled="disabled">Step</button>
-  <button onclick="lineButton()" id="lineButton" disabled="disabled">Line</button>
-  <button onclick="runButton()" id="runButton" disabled="disabled">Run</button>
+  <button onclick="lineButton()" id="lineButton" disabled="disabled">Step</button>
   <button onclick="hideJS()" id="hideButton">HideJS</button>
   </p>
 
