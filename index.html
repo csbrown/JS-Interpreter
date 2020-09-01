@@ -36,10 +36,16 @@
           interpreter.createNativeFunction(wrapper));
     }
 
+    function init(interpreter, scope) {
+        initAlert(interpreter, scope);
+        initOutput(interpreter, scope);
+    }
+
     function parseButton() {
       var code = document.getElementById('code').value;
-      myInterpreter = new Interpreter(code, initOutput);
+      myInterpreter = new Interpreter(code, init);
       disable('');
+      lineButtonStart = 0;
     }
 
     function updateVariablesList() {
@@ -49,10 +55,11 @@
                 value = myInterpreter.getValueFromScope(name);
             } catch (e) {
                 try {
-                    variable_cell = document.querySelector('#variablelist tr td[innerHTML="'.concat(name).concat('"]'));
-                    variable_row = variable_cell.parentNode;
+                    var variable_table = document.querySelector('#variablelist')
+                    var variable_cell = variable_table.querySelector('#variable_'.concat(name));
+                    var variable_row = variable_cell.parentNode;
                     variable_row.remove();
-                } catch(e) {}
+                } catch(e) {console.log(e);}
                 delete variables[name];
                 continue;
             }
@@ -88,6 +95,7 @@
       if (myInterpreter.stateStack.length) {
         var node =
             myInterpreter.stateStack[myInterpreter.stateStack.length - 1].node;
+        console.log(node);
         if (node.type == "VariableDeclaration") {
             for (declaration in node.declarations) {
                 variables[node.declarations[declaration].id.name] = 1;
@@ -156,7 +164,7 @@
     }
 
     function disable(disabled) {
-      //document.getElementById('stepButton').disabled = disabled;
+      document.getElementById('stepButton').disabled = disabled;
       document.getElementById('lineButton').disabled = disabled;
       //document.getElementById('runButton').disabled = disabled;
     }
@@ -241,6 +249,7 @@ DISPLAY result
 
   <button onclick="parseButton()">Parse</button>
   <button onclick="lineButton()" id="lineButton" disabled="disabled">Step</button>
+  <button onclick="stepButton()" id="stepButton" disabled="disabled">JSStep</button>
   <button onclick="hideJS()" id="hideButton">HideJS</button>
   </p>
 
