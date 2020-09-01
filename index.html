@@ -45,7 +45,8 @@
       var code = document.getElementById('code').value;
       myInterpreter = new Interpreter(code, init);
       disable('');
-      lineButtonStart = 0;
+      lineButtonStart = 999999999999999;
+      lastNode = null;
     }
 
     function updateVariablesList() {
@@ -110,49 +111,57 @@
       createSelection(start, end);
       try {
         var ok = myInterpreter.step();
+        if (ok) {
+          updateVariablesList();
+          return node;
+        } else { return null; }
       } finally {
         if (!ok) {
           disable('disabled');
         }
       }
-      updateVariablesList();
-      return node;
     }
 
-    var lineButtonStart = 0;
+    var lineButtonStart = 999999999999999;
+    var lastNode = null;
     function lineButton() {
-      var lineEnds = [];
+      var lineEnds = [0];
       var re = /\n/g;
       var code = document.getElementById('code').value;
       while ((match = re.exec(code)) != null) {
         lineEnds.push(match.index);
       }
-      var pseudocodelineEnds = [];
+      lineEnds.push(code.length);
+      var pseudocodelineEnds = [0];
       var pseudocode = document.getElementById('pseudocode').value;
       while ((match = re.exec(pseudocode)) != null) {
         pseudocodelineEnds.push(match.index);
       }
+      pseudocodelineEnds.push(pseudocode.length);
       function lineEndFinder(i) {
         function findLineEnd(j) {
-            return j >= i;
+            return j > i;
         }
         return findLineEnd;
       }
-      var newNode = stepButton();
+      
+      if (lastNode === null) { lastNode = stepButton(); }
       var i = 0;
       while ((
-                lineEnds.findIndex(lineEndFinder(lineButtonStart)) == lineEnds.findIndex(lineEndFinder(newNode.start))
-            ) || (newNode.type == "BlockStatement") || (newNode.type == "Program")
+                lineEnds.findIndex(lineEndFinder(lineButtonStart)) == lineEnds.findIndex(lineEndFinder(lastNode.start))
+            ) || (lastNode.type == "BlockStatement") || (lastNode.type == "Program")
         ) {
-        newNode = stepButton();
+        lastNode = stepButton();
         i += 1;
-        if (i >= 100) { break; }
+        if ((i >= 100) || lastNode === null) { break; }
       }
-      var end = lineEnds.findIndex(lineEndFinder(lineButtonStart));
+      var end = lineEnds.findIndex(lineEndFinder(lastNode.start));
       var start = end - 1;
+      console.log(start); console.log(end);
       //createSelection(lineEnds[start], lineEnds[end]);
+      console.log(pseudocodelineEnds);
       createPseudoCodeSelection(pseudocodelineEnds[start], pseudocodelineEnds[end]);
-      lineButtonStart = newNode.start;
+      lineButtonStart = lastNode.start;
     }
 
     function runButton() {
