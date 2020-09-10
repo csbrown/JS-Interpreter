@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>js2pseudocode</title>
+  <link href="demos/style.css" rel="stylesheet" type="text/css">
+  <script src="acorn.js"></script>
+  <script src="interpreter.js"></script>
+  <script src="basic_js2pseudocode.js"></script>
+</head>
+<body>
+  
+  <h1>Phony pseudocode interpreter</h1>
+
+  <textarea id="code" style="display:inline-block;">
+var result = [];
+function fibonacci(n, output) {
+  var a = 1, b = 1, sum;
+  for (var i = 0; i &lt; n;) {
+    output.push(a);
+    sum = a + b;
+    a = b;
+    b = sum;
+    i++;}}
+fibonacci(16, result);
+alert(result.join(', '));
+</textarea>
+<textarea readonly id="pseudocode" style="display:inline-block;">
+SET result to empty list
+DEFINE FUNCTION fibonacci(n, output) {
+  SET a to 1, SET b to 1, SET sum to 0, SET i to 0
+  WHILE i &lt; n
+    PUSH a onto output
+    SET sum to a+b
+    SET a to b
+    SET b to sum
+    SET i to i+1
+fibonacci(16, result);
+DISPLAY result
+</textarea>
+
+<div style="display:inline-block;">
+<h4> List of Variables </h4>
+<table id="variablelist" style="display:inline-block;">
+</table>
+</div>
+
+<br><br>
+
+  <h4> Program Output </h4>
+  <input id="outputarea" type="text" size=200 readonly="readonly" />
+
+<br><br>
+
+  <button onclick="parseButton()">Reset</button>
+  <button onclick="lineButton()" id="lineButton" disabled="disabled">Step</button>
+  <!--button onclick="stepButton()" id="stepButton" disabled="disabled">JSStep</button-->
+  <!--button onclick="hideJS()" id="hideButton">HideJS</button-->
+  </p>
+
+  <p><small>
+  <script>
+    disable('disabled');
+  </script>
+  </small></p>
+
+</body>
+</html>
